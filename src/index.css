@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 245 245 250;
+    --card: 255 255 255;
+    --muted: 107 114 128;
+    --fg: 17 24 39;
+    --ring: 59 130 246;
+  }
+  .dark {
+    --bg: 17 24 39;
+    --card: 31 41 55;
+    --muted: 156 163 175;
+    --fg: 243 244 246;
+    --ring: 147 197 253;
+  }
+  html, body, #root { height: 100%; }
+  body { background-color: rgb(var(--bg)); color: rgb(var(--fg)); }
+}
+
+@layer components {
+  .card { @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm; }
+  .shadow-card { @apply shadow-lg shadow-gray-200/50 dark:shadow-gray-900/50; }
+  .btn { @apply inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors; }
+  .btn-primary { @apply btn bg-blue-600 hover:bg-blue-700 text-white; }
+  .btn-secondary { @apply btn bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-100; }
+  .pill { @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium; }
+}
