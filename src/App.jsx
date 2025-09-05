@@ -8,12 +8,10 @@ function App() {
   const isLoadingSummary = (data) => {
     // Empty object {} indicates loading
     if (!data || Object.keys(data).length === 0) {
-      console.log(data, Object.keys(data).length)
       return true
     }
-    // Check if data contains "output" string (as mentioned in requirements)
-    const dataStr = JSON.stringify(data)
-    return dataStr.includes('"output"')
+    // Check if data has proper output structure
+    return !data.output || !Array.isArray(data.output)
   }
 
   // Function to load all summaries from localStorage
@@ -27,13 +25,12 @@ function App() {
           // Include all summaries, both loading and completed
           if (storedData !== null) {
             const timestamp = key.replace('summary_', '')
-            console.log(Object.keys(storedData).length == 0)
             summaries.push({
               key,
               timestamp,
               data: storedData,
               date: new Date(parseInt(timestamp) * 1000).toLocaleString(),
-              isLoading: !(Object.keys(storedData).length == 0)
+              isLoading: isLoadingSummary(storedData)
             })
           }
         } catch (error) {
@@ -65,6 +62,7 @@ function App() {
 
   // New Summary modal state
   const [showSummaryModal, setShowSummaryModal] = useState(false)
+  const [isSubmittingSummary, setIsSubmittingSummary] = useState(false)
   const [npubInput, setNpubInput] = useState('')
   const [instructionInput, setInstructionInput] = useState('Posts that contain useful information that educate me in someway or the other. Shitposting should be avoided. Low effort notes should be avoided.')
   const [currTimestampInput, setCurrTimestampInput] = useState(() => Math.floor(Date.now() / 1000))
@@ -98,6 +96,7 @@ function App() {
   }
 
   const handleSubmitSummary = async () => {
+    setIsSubmittingSummary(true)
     try {
       // Store empty JSON before request to mark initiation
       const summaryKey = `summary_${currTimestampInput}`
@@ -140,6 +139,8 @@ function App() {
       }
     } catch (error) {
       console.error('Error submitting summary:', error)
+    } finally {
+      setIsSubmittingSummary(false)
     }
   }
 
@@ -327,14 +328,26 @@ function App() {
               <button
                 onClick={handleCloseModal}
                 className="btn-secondary flex-1"
+                disabled={isSubmittingSummary}
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmitSummary}
-                className="btn-primary flex-1"
+                disabled={isSubmittingSummary}
+                className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit
+                {isSubmittingSummary ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Submitting...
+                  </span>
+                ) : (
+                  'Submit'
+                )}
               </button>
             </div>
           </div>
