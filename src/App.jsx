@@ -1,11 +1,36 @@
 import { useEffect, useState } from 'react'
-import JsonInput from './components/JsonInput'
 import EventFeed from './components/EventFeed'
 import { sampleData } from './data/sampleData'
 import './index.css'
 
 function App() {
-  const [data, setData] = useState(null)
+  const [data] = useState(() => {
+    // Check for stored summaries in localStorage
+    const storedSummaries = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith('summary_')) {
+        try {
+          const storedData = JSON.parse(localStorage.getItem(key))
+          // Only add non-empty objects (not the initial empty {})
+          if (storedData && Object.keys(storedData).length > 0) {
+            storedSummaries.push(storedData)
+          }
+        } catch (error) {
+          console.warn(`Failed to parse stored summary with key ${key}:`, error)
+        }
+      }
+    }
+    
+    // If any summaries exist, load the first one; otherwise use sampleData
+    if (storedSummaries.length > 0) {
+      console.log(`Loading stored summary data (${storedSummaries.length} summaries found)`)
+      return storedSummaries[0]
+    } else {
+      console.log('No stored summaries found, using sample data')
+      return sampleData
+    }
+  })
   const [dark, setDark] = useState(() => {
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
   })
@@ -13,10 +38,6 @@ function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
   }, [dark])
-
-  const handleDataLoad = (jsonData) => setData(jsonData)
-  const loadSampleData = () => setData(sampleData)
-  const clearData = () => setData(null)
 
   return (
     <div className="min-h-screen">
@@ -30,12 +51,6 @@ function App() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {!data && (
-              <button onClick={loadSampleData} className="btn-primary">Load Sample</button>
-            )}
-            {data && (
-              <button onClick={clearData} className="btn-secondary">Clear</button>
-            )}
             <button onClick={() => setDark(v => !v)} className="btn-secondary" aria-label="Toggle theme">
               {dark ? 'Light' : 'Dark'}
             </button>
@@ -44,35 +59,29 @@ function App() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
-        {!data ? (
-          <JsonInput onDataLoad={handleDataLoad} />
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <section className="lg:col-span-2 order-2 lg:order-1">
-              <EventFeed data={data} />
-            </section>
-            <aside className="order-1 lg:order-2">
-              <div className="card p-4 mb-6">
-                <h3 className="font-semibold mb-2">Feed Summary</h3>
-                <ul className="space-y-3">
-                  {data.output.map((o, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-semibold">
-                        {o.npub.slice(4,6).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{o.npub.slice(0, 12)}…{o.npub.slice(-8)}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{o.events.length} events</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <JsonInput onDataLoad={handleDataLoad} />
-            </aside>
-          </div>
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <section className="lg:col-span-2 order-2 lg:order-1">
+            <EventFeed data={data} />
+          </section>
+          <aside className="order-1 lg:order-2">
+            <div className="card p-4 mb-6">
+              <h3 className="font-semibold mb-2">Feed Summary</h3>
+              <ul className="space-y-3">
+                {data.output.map((o, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-semibold">
+                      {o.npub.slice(4,6).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{o.npub.slice(0, 12)}…{o.npub.slice(-8)}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{o.events.length} events</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </aside>
+        </div>
       </main>
 
       <footer className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
