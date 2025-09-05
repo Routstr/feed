@@ -63,17 +63,80 @@ function App() {
   // New Summary modal state
   const [showSummaryModal, setShowSummaryModal] = useState(false)
   const [isSubmittingSummary, setIsSubmittingSummary] = useState(false)
+  const [retryingSummaryKey, setRetryingSummaryKey] = useState(null)
   const [npubInput, setNpubInput] = useState('')
   const [instructionInput, setInstructionInput] = useState('Posts that contain useful information that educate me in someway or the other. Shitposting should be avoided. Low effort notes should be avoided.')
   const [currTimestampInput, setCurrTimestampInput] = useState(() => Math.floor(Date.now() / 1000))
   const [sinceInput, setSinceInput] = useState(() => Math.floor(Date.now() / 1000) - (24 * 60 * 60))
 
-  // Function to handle selecting a different summary
-  const handleSummarySelect = (summaryKey) => {
+  // Function to handle selecting a different summary or retrying a loading summary
+  const handleSummarySelect = async (summaryKey) => {
     const selectedSummary = allSummaries.find(s => s.key === summaryKey)
-    if (selectedSummary) {
-      setData(selectedSummary.data)
-      setCurrentSummaryKey(summaryKey)
+    if (!selectedSummary) return
+
+    // If summary is loading, retry the request
+    if (selectedSummary.isLoading) {
+      await handleRetrySummary(summaryKey)
+      return
+    }
+
+    // Otherwise, just load the summary
+    setData(selectedSummary.data)
+    setCurrentSummaryKey(summaryKey)
+  }
+
+  // Function to retry loading a summary
+  const handleRetrySummary = async (summaryKey) => {
+    setRetryingSummaryKey(summaryKey)
+    try {
+      // Get the stored loading data which should contain original request params
+      const storedData = JSON.parse(localStorage.getItem(summaryKey))
+      
+      // If no request params stored, we can't retry
+      if (!storedData || !storedData.requestParams) {
+        console.error('No request parameters found for retry')
+        return
+      }
+
+      const { npub, since, curr_timestamp } = storedData.requestParams
+      
+      console.log('Retrying POST request to https://6d8ea891e9b2.ngrok-free.app/run')
+      
+      const response = await fetch('https://6d8ea891e9b2.ngrok-free.app/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({
+          npub: npub,
+          since: since,
+          curr_timestamp: curr_timestamp
+        })
+      })
+      
+      if (response.ok) {
+        const responseData = await response.json()
+        console.log('Retry response received:', responseData)
+        
+        // Store the actual response data
+        localStorage.setItem(summaryKey, JSON.stringify(responseData))
+        
+        // Refresh summaries list and load the updated summary
+        refreshSummaries()
+        const updatedSummaries = loadAllSummaries()
+        const updatedSummary = updatedSummaries.find(s => s.key === summaryKey)
+        if (updatedSummary) {
+          setData(updatedSummary.data)
+          setCurrentSummaryKey(summaryKey)
+        }
+      } else {
+        console.error('Failed to retry summary:', response.statusText)
+      }
+    } catch (error) {
+      console.error('Error retrying summary:', error)
+    } finally {
+      setRetryingSummaryKey(null)
     }
   }
 
@@ -98,9 +161,16 @@ function App() {
   const handleSubmitSummary = async () => {
     setIsSubmittingSummary(true)
     try {
-      // Store empty JSON before request to mark initiation
+      // Store loading state with request parameters before request to mark initiation
       const summaryKey = `summary_${currTimestampInput}`
-      localStorage.setItem(summaryKey, JSON.stringify({}))
+      const loadingData = {
+        requestParams: {
+          npub: npubInput,
+          since: sinceInput,
+          curr_timestamp: currTimestampInput
+        }
+      }
+      localStorage.setItem(summaryKey, JSON.stringify(loadingData))
       
       console.log('Making POST request to https://6d8ea891e9b2.ngrok-free.app/run')
       
@@ -198,10 +268,12 @@ function App() {
                     <li key={summary.key}>
                       <button
                         onClick={() => handleSummarySelect(summary.key)}
-                        disabled={summary.isLoading}
+                        disabled={retryingSummaryKey === summary.key}
                         className={`w-full text-left p-2 rounded-md text-sm transition-colors ${
                           summary.isLoading
-                            ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 cursor-wait opacity-75'
+                            ? retryingSummaryKey === summary.key
+                              ? 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 cursor-wait'
+                              : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 cursor-pointer'
                             : currentSummaryKey === summary.key
                             ? 'bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800'
                             : 'hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent'
@@ -228,7 +300,7 @@ function App() {
                         </div>
                         {summary.isLoading ? (
                           <div className="text-xs text-yellow-600 dark:text-yellow-400 italic">
-                            Loading...
+                            {retryingSummaryKey === summary.key ? 'Retrying...' : 'Loading... (click to retry)'}
                           </div>
                         ) : summary.data.output ? (
                           <div className="text-xs text-gray-500 dark:text-gray-400">
