@@ -4,6 +4,18 @@ import { sampleData } from './data/sampleData'
 import './index.css'
 
 function App() {
+  // Function to detect if a summary is in loading state
+  const isLoadingSummary = (data) => {
+    // Empty object {} indicates loading
+    if (!data || Object.keys(data).length === 0) {
+      console.log(data, Object.keys(data).length)
+      return true
+    }
+    // Check if data contains "output" string (as mentioned in requirements)
+    const dataStr = JSON.stringify(data)
+    return dataStr.includes('"output"')
+  }
+
   // Function to load all summaries from localStorage
   const loadAllSummaries = () => {
     const summaries = []
@@ -12,14 +24,16 @@ function App() {
       if (key && key.startsWith('summary_')) {
         try {
           const storedData = JSON.parse(localStorage.getItem(key))
-          // Only add non-empty objects (not the initial empty {})
-          if (storedData && Object.keys(storedData).length > 0) {
+          // Include all summaries, both loading and completed
+          if (storedData !== null) {
             const timestamp = key.replace('summary_', '')
+            console.log(Object.keys(storedData).length == 0)
             summaries.push({
               key,
               timestamp,
               data: storedData,
-              date: new Date(parseInt(timestamp) * 1000).toLocaleString()
+              date: new Date(parseInt(timestamp) * 1000).toLocaleString(),
+              isLoading: !(Object.keys(storedData).length == 0)
             })
           }
         } catch (error) {
@@ -183,28 +197,43 @@ function App() {
                     <li key={summary.key}>
                       <button
                         onClick={() => handleSummarySelect(summary.key)}
+                        disabled={summary.isLoading}
                         className={`w-full text-left p-2 rounded-md text-sm transition-colors ${
-                          currentSummaryKey === summary.key
+                          summary.isLoading
+                            ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 cursor-wait opacity-75'
+                            : currentSummaryKey === summary.key
                             ? 'bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800'
                             : 'hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent'
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-medium truncate">
+                          <span className="font-medium truncate flex items-center gap-2">
                             Summary {summary.timestamp.slice(-6)}
+                            {summary.isLoading && (
+                              <span className="inline-flex items-center">
+                                <svg className="animate-spin h-3 w-3 text-yellow-600 dark:text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                              </span>
+                            )}
                           </span>
-                          {currentSummaryKey === summary.key && (
+                          {!summary.isLoading && currentSummaryKey === summary.key && (
                             <span className="text-xs text-blue-600 dark:text-blue-400">●</span>
                           )}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           {summary.date}
                         </div>
-                        {summary.data.output && (
+                        {summary.isLoading ? (
+                          <div className="text-xs text-yellow-600 dark:text-yellow-400 italic">
+                            Loading...
+                          </div>
+                        ) : summary.data.output ? (
                           <div className="text-xs text-gray-500 dark:text-gray-400">
                             {summary.data.output.reduce((acc, o) => acc + o.events.length, 0)} events
                           </div>
-                        )}
+                        ) : null}
                       </button>
                     </li>
                   ))}
