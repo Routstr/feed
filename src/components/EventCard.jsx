@@ -1,6 +1,6 @@
 import React from 'react';
 
-const EventCard = ({ event, npub }) => {
+const EventCard = ({ event, npub, name, profile_pic }) => {
   const formatDate = (timestamp) => {
     if (!timestamp) return 'Unknown date';
     const date = new Date(timestamp * 1000);
@@ -27,7 +27,9 @@ const EventCard = ({ event, npub }) => {
 
   const truncateNpub = (val) => (val ? `${val.slice(0, 12)}…${val.slice(-8)}` : 'Unknown');
 
-  const content = String(event.event_content || '');
+  // Display context_summary if this event is part of a thread, otherwise show event_content
+  const isThreadEvent = event.events_in_thread && event.events_in_thread.length > 0;
+  const content = String(isThreadEvent ? (event.context_summary || '') : (event.event_content || ''));
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const contentParts = content.split(urlRegex);
 
@@ -36,8 +38,21 @@ const EventCard = ({ event, npub }) => {
       <div className="flex items-start gap-3">
         {/* Avatar */}
         <div className="shrink-0">
-          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 ring-2 ring-white dark:ring-gray-800 flex items-center justify-center text-white font-semibold">
-            {npub ? npub.slice(4, 6).toUpperCase() : 'NP'}
+          {profile_pic ? (
+            <img
+              src={profile_pic}
+              alt={name || 'Profile'}
+              className="w-11 h-11 rounded-full ring-2 ring-white dark:ring-gray-800 object-cover"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          <div
+            className={`w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 ring-2 ring-white dark:ring-gray-800 flex items-center justify-center text-white font-semibold ${profile_pic ? 'hidden' : ''}`}
+          >
+            {name ? name.slice(0, 2).toUpperCase() : (npub ? npub.slice(4, 6).toUpperCase() : 'NP')}
           </div>
         </div>
 
@@ -46,6 +61,9 @@ const EventCard = ({ event, npub }) => {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="min-w-0">
               <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                {name || 'Unknown User'}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                 {truncateNpub(npub)}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(event.timestamp)}</p>

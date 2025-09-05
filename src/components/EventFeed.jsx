@@ -49,7 +49,13 @@ const EventFeed = ({ data }) => {
 
   const allEvents = useMemo(() => {
     if (!data?.output) return [];
-    return data.output.flatMap(o => o.events.map(e => ({ ...e, npub: o.npub, summary: o.summary })));
+    return data.output.flatMap(o => o.events.map(e => ({
+      ...e,
+      npub: o.npub,
+      name: o.name,
+      profile_pic: o.profile_pic,
+      summary: o.summary
+    })));
   }, [data]);
 
   const filtered = useMemo(() => {
@@ -84,7 +90,13 @@ const EventFeed = ({ data }) => {
       ) : (
         <div>
           {sorted.map((event, idx) => (
-            <EventCard key={`${event.npub}-${event.timestamp}-${idx}`} event={event} npub={event.npub} />
+            <EventCard
+              key={`${event.npub}-${event.timestamp}-${idx}`}
+              event={event}
+              npub={event.npub}
+              name={event.name}
+              profile_pic={event.profile_pic}
+            />
           ))}
         </div>
       )}
