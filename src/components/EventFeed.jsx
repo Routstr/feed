@@ -62,7 +62,13 @@ const EventFeed = ({ data }) => {
     const q = query.toLowerCase();
     return allEvents
       .filter(e => (e.relevancy_score ?? 0) >= minScore)
-      .filter(e => !q || String(e.event_content).toLowerCase().includes(q));
+      .filter(e => {
+        if (!q) return true;
+        // Search in context_summary if this event is part of a thread, otherwise search in event_content
+        const isThreadEvent = e.events_in_thread && e.events_in_thread.length > 0;
+        const searchContent = isThreadEvent ? (e.context_summary || '') : (e.event_content || '');
+        return String(searchContent).toLowerCase().includes(q);
+      });
   }, [allEvents, minScore, query]);
 
   const sorted = useMemo(() => {
