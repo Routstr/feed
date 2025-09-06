@@ -266,48 +266,74 @@ function App() {
                 <ul className="space-y-2">
                   {allSummaries.map((summary) => (
                     <li key={summary.key}>
-                      <button
-                        onClick={() => handleSummarySelect(summary.key)}
-                        disabled={retryingSummaryKey === summary.key}
-                        className={`w-full text-left p-2 rounded-md text-sm transition-colors ${
+                      <div
+                        className={`relative p-2 rounded-md text-sm transition-colors ${
                           summary.isLoading
                             ? retryingSummaryKey === summary.key
-                              ? 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 cursor-wait'
-                              : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 cursor-pointer'
+                              ? 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800'
+                              : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'
                             : currentSummaryKey === summary.key
                             ? 'bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800'
                             : 'hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent'
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium truncate flex items-center gap-2">
-                            Summary {summary.timestamp.slice(-6)}
-                            {summary.isLoading && (
-                              <span className="inline-flex items-center">
-                                <svg className="animate-spin h-3 w-3 text-yellow-600 dark:text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                              </span>
+                        <button
+                          onClick={() => handleSummarySelect(summary.key)}
+                          disabled={retryingSummaryKey === summary.key}
+                          className="w-full text-left"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium truncate flex items-center gap-2">
+                              Summary {summary.timestamp.slice(-6)}
+                              {summary.isLoading && (
+                                <span className="inline-flex items-center">
+                                  <svg className="animate-spin h-3 w-3 text-yellow-600 dark:text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                </span>
+                              )}
+                            </span>
+                            {!summary.isLoading && currentSummaryKey === summary.key && (
+                              <span className="text-xs text-blue-600 dark:text-blue-400">●</span>
                             )}
-                          </span>
-                          {!summary.isLoading && currentSummaryKey === summary.key && (
-                            <span className="text-xs text-blue-600 dark:text-blue-400">●</span>
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {summary.date}
+                          </div>
+                          {summary.isLoading ? (
+                            <div className="text-xs text-yellow-600 dark:text-yellow-400 italic">
+                              {retryingSummaryKey === summary.key ? 'Retrying...' : 'Loading... (click to retry)'}
+                            </div>
+                          ) : summary.data.output ? (
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {summary.data.output.reduce((acc, o) => acc + o.events.length, 0)} events
+                            </div>
+                          ) : null}
+                        </button>
+                        
+                        {/* Refetch button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRetrySummary(summary.key)
+                          }}
+                          disabled={retryingSummaryKey === summary.key}
+                          className="absolute top-2 right-2 p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Refetch summary"
+                        >
+                          {retryingSummaryKey === summary.key ? (
+                            <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          ) : (
+                            <svg className="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
                           )}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {summary.date}
-                        </div>
-                        {summary.isLoading ? (
-                          <div className="text-xs text-yellow-600 dark:text-yellow-400 italic">
-                            {retryingSummaryKey === summary.key ? 'Retrying...' : 'Loading... (click to retry)'}
-                          </div>
-                        ) : summary.data.output ? (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {summary.data.output.reduce((acc, o) => acc + o.events.length, 0)} events
-                          </div>
-                        ) : null}
-                      </button>
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
