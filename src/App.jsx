@@ -100,6 +100,8 @@ function App() {
     // Load npub from localStorage on initial mount
     return localStorage.getItem('user_npub') || ''
   })
+  // State for collapsible summaries list on mobile
+  const [summariesExpanded, setSummariesExpanded] = useState(false)
   const [instructionInput, setInstructionInput] = useState('Posts that contain useful information that educate me in someway or the other. Shitposting should be avoided. Low effort notes should be avoided.')
   const [sinceInput, setSinceInput] = useState('')
   const [lastSummaryMessage, setLastSummaryMessage] = useState('')
@@ -337,19 +339,109 @@ function App() {
 
             <div className="card p-4 mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">Stored Summaries</h3>
                 <button
-                  onClick={refreshSummaries}
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                  title="Refresh summaries list"
+                  onClick={() => setSummariesExpanded(!summariesExpanded)}
+                  className="flex items-center gap-2 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors lg:pointer-events-none"
                 >
-                  Refresh
+                  <h3>Stored Summaries</h3>
+                  <svg
+                    className={`w-4 h-4 transition-transform lg:hidden ${summariesExpanded ? 'rotate-180' : ''}`}
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
               </div>
               {allSummaries.length > 0 ? (
-                <ul className="space-y-2">
-                  {allSummaries.map((summary) => (
-                    <li key={summary.key}>
+                <>
+                  {/* Always show the latest summary */}
+                  {allSummaries.length > 0 && (
+                    <div className="mb-2">
+                      {(() => {
+                        const summary = allSummaries[0];
+                        return (
+                          <div
+                            className={`relative p-2 rounded-md text-sm transition-colors ${
+                              summary.isLoading
+                                ? retryingSummaryKey === summary.key
+                                  ? 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800'
+                                  : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'
+                                : currentSummaryKey === summary.key
+                                ? 'bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800'
+                                : 'hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent'
+                            }`}
+                          >
+                            <button
+                              onClick={() => handleSummarySelect(summary.key)}
+                              disabled={retryingSummaryKey === summary.key}
+                              className="w-full text-left"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium truncate flex items-center gap-2">
+                                  Summary {formatRelativeTime(summary.timestamp)}
+                                  {summary.isLoading && (
+                                    <span className="inline-flex items-center">
+                                      <svg className="animate-spin h-3 w-3 text-yellow-600 dark:text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                      </svg>
+                                    </span>
+                                  )}
+                                </span>
+                                {!summary.isLoading && currentSummaryKey === summary.key && (
+                                  <span className="text-xs text-blue-600 dark:text-blue-400">●</span>
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {summary.date}
+                              </div>
+                              {summary.isLoading ? (
+                                <div className="text-xs text-yellow-600 dark:text-yellow-400 italic">
+                                  {retryingSummaryKey === summary.key ? 'Retrying...' : 'Loading... (click to retry)'}
+                                </div>
+                              ) : summary.data.output ? (
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  {summary.data.output.reduce((acc, o) => acc + o.events.length, 0)} events
+                                </div>
+                              ) : null}
+                            </button>
+                            
+                            {/* Refetch button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleRetrySummary(summary.key)
+                              }}
+                              disabled={retryingSummaryKey === summary.key}
+                              className="absolute top-2 right-2 p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Refetch summary"
+                            >
+                              {retryingSummaryKey === summary.key ? (
+                                <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                              ) : (
+                                <svg className="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                  
+                  {/* Show remaining summaries when expanded (or always on desktop) */}
+                  {allSummaries.length > 1 && (
+                    <div className={`${summariesExpanded ? 'block' : 'hidden'} lg:block`}>
+                      <ul className="space-y-2">
+                        {allSummaries.slice(1).map((summary) => (
+                          <li key={summary.key}>
                       <div
                         className={`relative p-2 rounded-md text-sm transition-colors ${
                           summary.isLoading
@@ -419,8 +511,11 @@ function App() {
                         </button>
                       </div>
                     </li>
-                  ))}
-                </ul>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
                   No stored summaries found.
