@@ -233,8 +233,8 @@ function App() {
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600"></div>
             <div>
-              <h1 className="text-lg font-bold">Nostr Events Feed</h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Twitter-like UI with relevancy scoring</p>
+              <h1 className="text-lg font-bold">Goose Powered Feed</h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Consume Content like a Pro</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

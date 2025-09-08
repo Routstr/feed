@@ -257,7 +257,7 @@ export default function NewSummary({ allSummaries, onCreated }) {
                               </button>
                               {warningTooltipOpen && (
                                 <div className="absolute left-0 mt-1 z-10 max-w-xs p-2 rounded border border-red-300 dark:border-red-700 bg-white dark:bg-gray-800 text-red-700 dark:text-red-300 shadow-lg">
-                                  Top 50 accounts you've reacted to will be used to analyse and fetch events. Working on a better algorithm soon (if you have suggestions and hit up Redshift)
+                                  You're following too many accounts. Top 50 accounts you've reacted to will be used to analyse and fetch events. Working on a better algorithm soon (if you have suggestions and hit up Redshift)
                                 </div>
                               )}
                             </div>
