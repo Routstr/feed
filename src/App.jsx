@@ -98,8 +98,8 @@ function App() {
   const [retryingSummaryKey, setRetryingSummaryKey] = useState(null)
   const [npubInput, setNpubInput] = useState('')
   const [instructionInput, setInstructionInput] = useState('Posts that contain useful information that educate me in someway or the other. Shitposting should be avoided. Low effort notes should be avoided.')
-  const [currTimestampInput, setCurrTimestampInput] = useState(() => Math.floor(Date.now() / 1000))
-  const [sinceInput, setSinceInput] = useState(() => Math.floor(Date.now() / 1000) - (24 * 60 * 60))
+  const [sinceInput, setSinceInput] = useState('')
+  const [lastSummaryMessage, setLastSummaryMessage] = useState('')
 
   // Function to handle selecting a different summary or retrying a loading summary
   const handleSummarySelect = async (summaryKey) => {
@@ -182,9 +182,34 @@ function App() {
 
   // New Summary modal handlers
   const handleNewSummary = () => {
-    // Reset timestamp inputs to current values when opening modal
-    setCurrTimestampInput(Math.floor(Date.now() / 1000))
-    setSinceInput(Math.floor(Date.now() / 1000) - (24 * 60 * 60))
+    // Get the latest summary timestamp if available
+    const latestSummary = allSummaries.length > 0 ? allSummaries[0] : null
+    
+    if (latestSummary) {
+      // Set since to the latest summary's timestamp
+      const latestTimestamp = parseInt(latestSummary.timestamp)
+      const dateObj = new Date(latestTimestamp * 1000)
+      // Format as datetime-local input value (YYYY-MM-DDTHH:mm)
+      const year = dateObj.getFullYear()
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0')
+      const day = String(dateObj.getDate()).padStart(2, '0')
+      const hours = String(dateObj.getHours()).padStart(2, '0')
+      const minutes = String(dateObj.getMinutes()).padStart(2, '0')
+      const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`
+      setSinceInput(formattedDate)
+      setLastSummaryMessage(`Set to summarize since the last summary (${formatRelativeTime(latestTimestamp)})`)
+    } else {
+      // Default to 24 hours ago if no summaries exist
+      const yesterday = new Date(Date.now() - (24 * 60 * 60 * 1000))
+      const year = yesterday.getFullYear()
+      const month = String(yesterday.getMonth() + 1).padStart(2, '0')
+      const day = String(yesterday.getDate()).padStart(2, '0')
+      const hours = String(yesterday.getHours()).padStart(2, '0')
+      const minutes = String(yesterday.getMinutes()).padStart(2, '0')
+      const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`
+      setSinceInput(formattedDate)
+      setLastSummaryMessage('')
+    }
     setShowSummaryModal(true)
   }
 
@@ -195,9 +220,13 @@ function App() {
   const handleSubmitSummary = async () => {
     setIsSubmittingSummary(true)
     try {
+      // Convert datetime-local input to timestamp
+      const sinceTimestamp = Math.floor(new Date(sinceInput).getTime() / 1000)
+      const currTimestamp = Math.floor(Date.now() / 1000)
+      
       // Create both keys: main summary key and params key
-      const summaryKey = `summary_${currTimestampInput}`
-      const summaryKeyParams = `summary_${currTimestampInput}_params`
+      const summaryKey = `summary_${currTimestamp}`
+      const summaryKeyParams = `summary_${currTimestamp}_params`
       
       // Store loading state in main summary key
       const loadingData = {}
@@ -207,8 +236,8 @@ function App() {
       const paramsData = {
         requestParams: {
           npub: npubInput,
-          since: sinceInput,
-          curr_timestamp: currTimestampInput
+          since: sinceTimestamp,
+          curr_timestamp: currTimestamp
         }
       }
       localStorage.setItem(summaryKeyParams, JSON.stringify(paramsData))
@@ -223,8 +252,8 @@ function App() {
         },
         body: JSON.stringify({
           npub: npubInput,
-          since: sinceInput,
-          curr_timestamp: currTimestampInput
+          since: sinceTimestamp,
+          curr_timestamp: currTimestamp
         })
       })
       
@@ -424,29 +453,21 @@ function App() {
               </div>
 
               <div>
-                <label htmlFor="curr_timestamp" className="block text-sm font-medium mb-1">
-                  Current Timestamp
-                </label>
-                <input
-                  id="curr_timestamp"
-                  type="number"
-                  value={currTimestampInput}
-                  onChange={(e) => setCurrTimestampInput(parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
                 <label htmlFor="since" className="block text-sm font-medium mb-1">
-                  Since Timestamp
+                  Summarize Since
                 </label>
                 <input
                   id="since"
-                  type="number"
+                  type="datetime-local"
                   value={sinceInput}
-                  onChange={(e) => setSinceInput(parseInt(e.target.value))}
+                  onChange={(e) => setSinceInput(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+                {lastSummaryMessage && (
+                  <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
+                    {lastSummaryMessage}
+                  </p>
+                )}
               </div>
 
               <div>
