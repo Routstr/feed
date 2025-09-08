@@ -98,29 +98,7 @@ const EventCard = ({ event, npub, name, profile_pic }) => {
             </div>
           </div>
 
-          {/* Footer actions (non-functional placeholders) */}
-          <div className="flex items-center gap-6 mt-4 text-xs text-gray-500 dark:text-gray-400">
-            <button className="hover:text-blue-600 dark:hover:text-blue-400 inline-flex items-center gap-1">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4"/>
-              </svg>
-              Reply
-            </button>
-            <button className="hover:text-emerald-600 dark:hover:text-emerald-400 inline-flex items-center gap-1">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12a9 9 0 0 0 15.5 6.5M21 12A9 9 0 0 0 5.5 5.5"/>
-                <path d="M17 7v4h-4"/>
-                <path d="M7 17v-4h4"/>
-              </svg>
-              Repost
-            </button>
-            <button className="hover:text-rose-600 dark:hover:text-rose-400 inline-flex items-center gap-1">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
-              Like
-            </button>
-          </div>
+          
         </div>
       </div>
     </article>
