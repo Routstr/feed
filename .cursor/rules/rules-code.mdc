@@ -1,0 +1,18 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+## Project Coding Rules (from AGENTS.md)
+
+- **Data shape**: All JSON must have `data.output` array. Each item includes `events`, `npub`, `name`, `profile_pic`, and `summary`. See `src/data/sampleData.js` for example and relevancy scoring.
+- **EventFeed mapping**: Flatten events and carry user fields when mapping:
+  `data.output.flatMap(o => o.events.map(e => ({ ...e, npub: o.npub, name: o.name, profile_pic: o.profile_pic })))`
+- **EventCard props**: `EventCard` expects `event`, `npub`, `name`, and `profile_pic`.
+- **Profile image fallback**: Use `onError` to toggle `hidden` class on the `<img>` and show a fallback `<div>`. Do not use other React patterns.
+- **Styling primitives**: Component classes like `.card`, `.btn-primary`, `.btn-secondary`, `.pill` are defined in `src/index.css` under `@layer components`.
+- **Theming**: Use custom CSS variables in `:root` and `.dark`. Toggle dark mode via `document.documentElement.classList.toggle('dark', dark)`, not Tailwind's built-in dark mode.
+- **Types**: Define types via JSDoc-style comments in `.js` files (see `src/types.js`), not TypeScript.
+- **JSON validation**: `JsonInput` must validate presence of `output` array and throw "Invalid JSON format" on failure.
+- **ESLint**: Unused variables that match `^[A-Z_]` are allowed (constants/types).

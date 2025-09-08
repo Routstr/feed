@@ -17,13 +17,7 @@ const EventCard = ({ event, npub, name, profile_pic }) => {
     return 'text-rose-700 bg-rose-100 dark:text-rose-200 dark:bg-rose-900/30';
   };
 
-  const barColor = (s) => {
-    if (s >= 85) return 'bg-emerald-500';
-    if (s >= 70) return 'bg-blue-500';
-    if (s >= 50) return 'bg-amber-500';
-    if (s >= 30) return 'bg-orange-500';
-    return 'bg-rose-500';
-  };
+  
 
   const truncateNpub = (val) => (val ? `${val.slice(0, 12)}…${val.slice(-8)}` : 'Unknown');
 
@@ -87,20 +81,23 @@ const EventCard = ({ event, npub, name, profile_pic }) => {
               )}
             </p>
           </div>
-
-          {/* Relevancy bar */}
-          <div className="mt-4">
-            <div className="h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-              <div
-                className={`h-full ${barColor(score)} transition-all`}
-                style={{ width: `${Math.max(0, Math.min(100, score))}%` }}
-              />
+          {event?.event_id ? (
+            <div className="mt-4">
+              <a
+                href={`https://njump.me/${event.event_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary inline-flex items-center gap-1 text-xs"
+              >
+                Njump <span aria-hidden="true" className="text-[11px] leading-none">↗</span>
+              </a>
             </div>
-          </div>
+          ) : null}
 
           
         </div>
       </div>
+      
     </article>
   );
 };

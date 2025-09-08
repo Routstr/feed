@@ -1,0 +1,5 @@
+---
+description: Use git add and do git commit after every change. 
+globs:
+alwaysApply: true
+---
