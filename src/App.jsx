@@ -96,7 +96,10 @@ function App() {
   const [showSummaryModal, setShowSummaryModal] = useState(false)
   const [isSubmittingSummary, setIsSubmittingSummary] = useState(false)
   const [retryingSummaryKey, setRetryingSummaryKey] = useState(null)
-  const [npubInput, setNpubInput] = useState('')
+  const [npubInput, setNpubInput] = useState(() => {
+    // Load npub from localStorage on initial mount
+    return localStorage.getItem('user_npub') || ''
+  })
   const [instructionInput, setInstructionInput] = useState('Posts that contain useful information that educate me in someway or the other. Shitposting should be avoided. Low effort notes should be avoided.')
   const [sinceInput, setSinceInput] = useState('')
   const [lastSummaryMessage, setLastSummaryMessage] = useState('')
@@ -182,6 +185,12 @@ function App() {
 
   // New Summary modal handlers
   const handleNewSummary = () => {
+    // Load stored npub if available
+    const storedNpub = localStorage.getItem('user_npub')
+    if (storedNpub) {
+      setNpubInput(storedNpub)
+    }
+    
     // Get the latest summary timestamp if available
     const latestSummary = allSummaries.length > 0 ? allSummaries[0] : null
     
@@ -220,6 +229,11 @@ function App() {
   const handleSubmitSummary = async () => {
     setIsSubmittingSummary(true)
     try {
+      // Store the npub in localStorage for future use
+      if (npubInput) {
+        localStorage.setItem('user_npub', npubInput)
+      }
+      
       // Convert datetime-local input to timestamp
       const sinceTimestamp = Math.floor(new Date(sinceInput).getTime() / 1000)
       const currTimestamp = Math.floor(Date.now() / 1000)
