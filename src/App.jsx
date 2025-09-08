@@ -4,6 +4,38 @@ import { sampleData } from './data/sampleData'
 import './index.css'
 
 function App() {
+  // Function to format timestamp as relative time
+  const formatRelativeTime = (timestamp) => {
+    const now = Math.floor(Date.now() / 1000)
+    const diff = now - parseInt(timestamp)
+    
+    if (diff < 60) return 'just now'
+    if (diff < 3600) {
+      const minutes = Math.floor(diff / 60)
+      return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`
+    }
+    if (diff < 86400) {
+      const hours = Math.floor(diff / 3600)
+      return `${hours}${hours === 1 ? ' hour' : ' hours'} ago`
+    }
+    if (diff < 604800) {
+      const days = Math.floor(diff / 86400)
+      if (days === 1) return '1 day ago'
+      if (days < 2) {
+        const hours = Math.floor((diff % 86400) / 3600)
+        if (hours > 0) return `1.5 days ago`
+        return '1 day ago'
+      }
+      return `${days} days ago`
+    }
+    if (diff < 2592000) {
+      const weeks = Math.floor(diff / 604800)
+      return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`
+    }
+    const months = Math.floor(diff / 2592000)
+    return `${months} ${months === 1 ? 'month' : 'months'} ago`
+  }
+
   // Function to detect if a summary is in loading state
   const isLoadingSummary = (data) => {
     // Empty object {} indicates loading
@@ -293,7 +325,7 @@ function App() {
                         >
                           <div className="flex items-center justify-between">
                             <span className="font-medium truncate flex items-center gap-2">
-                              Summary {summary.timestamp.slice(-6)}
+                              Summary {formatRelativeTime(summary.timestamp)}
                               {summary.isLoading && (
                                 <span className="inline-flex items-center">
                                   <svg className="animate-spin h-3 w-3 text-yellow-600 dark:text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
