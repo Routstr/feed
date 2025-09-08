@@ -49,6 +49,8 @@ export const sampleData = {
         }
       ],
       "npub": "npub12rv5lskctqxxs2c8rf2zlzc7xx3qpvzs3w4etgemauy9thegr43sf485vg",
+      "name": "calle",
+      "profile_pic": "https://avatars.githubusercontent.com/u/93376500",
       "summary": "Fetched 5 recent notes from npub12rv5lskctqxxs2c8rf2zlzc7xx3qpvzs3w4etgemauy9thegr43sf485vg (calle) from relay wss://eden.nostr.land. Analyzed each post for educational value and filtered out shitposting/low-effort content."
     },
     {
@@ -100,6 +102,8 @@ export const sampleData = {
         }
       ],
       "npub": "npub1sg6plzptd64u62a878hep2kev88swjh3tw00gjsfl8f237lmu63q0uf63m",
+      "name": "jack",
+      "profile_pic": "",
       "summary": "Fetched 5 recent posts from npub1sg6plzptd64u62a878hep2kev88swjh3tw00gjsfl8f237lmu63q0uf63m (jack). All posts were brief technical updates or reactions, none contained substantial educational content. Based on the instruction to filter for useful educational information while avoiding shitposting and low-effort content, none of these posts meet the criteria for high educational value."
     },
     {
@@ -151,6 +155,8 @@ export const sampleData = {
         }
       ],
       "npub": "npub1q3sle0kvfsehgsuexttt3ugjd8xdklxfwwkh559wxckmzddywnws6cd26p",
+      "name": "Alex Gleason",
+      "profile_pic": "",
       "summary": "Retrieved 5 recent posts from Alex Gleason's Nostr profile. Analyzed each post for educational value and filtered out low-effort content and shitposting. Found 1 educational post about AGENTS.md documentation, 2 potentially educational posts about Cashu geocaching and DoS attacks, 1 promotional post about treasures.to, and 1 low-effort shitpost about water consumption statistics."
     }
   ]
