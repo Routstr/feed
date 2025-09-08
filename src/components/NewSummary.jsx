@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { fetchFollowingForNpub } from '../lib/nostr'
 
 const formatRelativeTime = (timestamp) => {
@@ -41,6 +41,32 @@ export default function NewSummary({ allSummaries, onCreated }) {
   const [followingLoading, setFollowingLoading] = useState(false)
   const [followingCount, setFollowingCount] = useState(null)
   const [prefetchedFollowing, setPrefetchedFollowing] = useState(null)
+  const lastFetchedNpubRef = useRef('')
+  const debounceTimerRef = useRef(null)
+
+  const performFollowingFetch = async (npubToFetch) => {
+    try {
+      if (!npubToFetch) {
+        setPrefetchedFollowing(null)
+        setFollowingCount(null)
+        return
+      }
+      setFollowingLoading(true)
+      const list = await fetchFollowingForNpub(npubToFetch)
+      // Ensure we apply only if npub hasn't changed since request started
+      if (npubToFetch === npubInput) {
+        setPrefetchedFollowing(Array.isArray(list) ? list : [])
+        setFollowingCount(Array.isArray(list) ? list.length : 0)
+        lastFetchedNpubRef.current = npubToFetch
+      }
+    } catch (e) {
+      console.warn('Fetch following failed:', e)
+      setPrefetchedFollowing([])
+      setFollowingCount(0)
+    } finally {
+      setFollowingLoading(false)
+    }
+  }
 
   const open = async () => {
     const storedNpub = localStorage.getItem('user_npub')
@@ -72,23 +98,11 @@ export default function NewSummary({ allSummaries, onCreated }) {
     setShow(true)
 
     // If we have an npub available, prefetch following list and show loading
-    try {
-      const npubToFetch = storedNpub || npubInput
-      setFollowingCount(null)
-      setPrefetchedFollowing(null)
-      if (npubToFetch) {
-        setFollowingLoading(true)
-        const list = await fetchFollowingForNpub(npubToFetch)
-        setPrefetchedFollowing(Array.isArray(list) ? list : [])
-        setFollowingCount(Array.isArray(list) ? list.length : 0)
-      }
-    } catch (e) {
-      console.warn('Prefetch following failed:', e)
-      setPrefetchedFollowing([])
-      setFollowingCount(0)
-    } finally {
-      setFollowingLoading(false)
-    }
+    const npubToFetch = storedNpub || npubInput
+    setFollowingCount(null)
+    setPrefetchedFollowing(null)
+    lastFetchedNpubRef.current = ''
+    await performFollowingFetch(npubToFetch)
   }
 
   const close = () => setShow(false)
@@ -154,6 +168,35 @@ export default function NewSummary({ allSummaries, onCreated }) {
       setIsSubmitting(false)
     }
   }
+
+  // Refetch following when npub changes while modal is open
+  useEffect(() => {
+    if (!show) return
+
+    // Debounce to avoid firing on every keystroke
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      if (!npubInput) {
+        setPrefetchedFollowing(null)
+        setFollowingCount(null)
+        lastFetchedNpubRef.current = ''
+        setFollowingLoading(false)
+        return
+      }
+      if (npubInput !== lastFetchedNpubRef.current) {
+        performFollowingFetch(npubInput)
+      }
+    }, 400)
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [npubInput, show])
 
   return (
     <>
