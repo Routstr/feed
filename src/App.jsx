@@ -185,6 +185,37 @@ function App() {
     setAllSummaries(updatedSummaries)
   }
 
+  // Function to delete a summary (with confirmation)
+  const handleDeleteSummary = (summaryKey) => {
+    const confirmed = window.confirm('Delete this summary? This cannot be undone.')
+    if (!confirmed) return
+    try {
+      const timestamp = summaryKey.replace('summary_', '')
+      const paramsKey = `summary_${timestamp}_params`
+
+      // Remove stored summary and its params
+      localStorage.removeItem(summaryKey)
+      localStorage.removeItem(paramsKey)
+
+      // Refresh list
+      const updatedSummaries = loadAllSummaries()
+      setAllSummaries(updatedSummaries)
+
+      // If the deleted one was selected, choose a new selection
+      if (currentSummaryKey === summaryKey) {
+        if (updatedSummaries.length > 0) {
+          setData(updatedSummaries[0].data)
+          setCurrentSummaryKey(updatedSummaries[0].key)
+        } else {
+          setData(sampleData)
+          setCurrentSummaryKey(null)
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting summary:', error)
+    }
+  }
+
   // New Summary modal handlers
   const handleNewSummary = () => {
     // Load stored npub if available
@@ -429,6 +460,20 @@ function App() {
                                 </svg>
                               )}
                             </button>
+
+                            {/* Delete button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteSummary(summary.key)
+                              }}
+                              className="absolute top-2 right-8 p-1 rounded-md text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                              title="Delete summary"
+                            >
+                              <svg className="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0V5a2 2 0 012-2h2a2 2 0 012 2v2" />
+                              </svg>
+                            </button>
                           </div>
                         );
                       })()}
@@ -507,6 +552,20 @@ function App() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
                           )}
+                        </button>
+
+                        {/* Delete button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteSummary(summary.key)
+                          }}
+                          className="absolute top-2 right-8 p-1 rounded-md text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                          title="Delete summary"
+                        >
+                          <svg className="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0V5a2 2 0 012-2h2a2 2 0 012 2v2" />
+                          </svg>
                         </button>
                       </div>
                     </li>
