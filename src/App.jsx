@@ -19,7 +19,7 @@ function App() {
     const summaries = []
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i)
-      if (key && key.startsWith('summary_')) {
+      if (key && key.startsWith('summary_') && !key.endsWith('_params')) {
         try {
           const storedData = JSON.parse(localStorage.getItem(key))
           // Include all summaries, both loading and completed
@@ -89,16 +89,18 @@ function App() {
   const handleRetrySummary = async (summaryKey) => {
     setRetryingSummaryKey(summaryKey)
     try {
-      // Get the stored loading data which should contain original request params
-      const storedData = JSON.parse(localStorage.getItem(summaryKey))
+      // Get the stored params data which should contain original request params
+      const timestamp = summaryKey.replace('summary_', '')
+      const paramsKey = `summary_${timestamp}_params`
+      const storedParams = JSON.parse(localStorage.getItem(paramsKey))
       
       // If no request params stored, we can't retry
-      if (!storedData || !storedData.requestParams) {
+      if (!storedParams || !storedParams.requestParams) {
         console.error('No request parameters found for retry')
         return
       }
 
-      const { npub, since, curr_timestamp } = storedData.requestParams
+      const { npub, since, curr_timestamp } = storedParams.requestParams
       
       console.log('Retrying POST request to https://6d8ea891e9b2.ngrok-free.app/run')
       
@@ -161,16 +163,23 @@ function App() {
   const handleSubmitSummary = async () => {
     setIsSubmittingSummary(true)
     try {
-      // Store loading state with request parameters before request to mark initiation
+      // Create both keys: main summary key and params key
       const summaryKey = `summary_${currTimestampInput}`
-      const loadingData = {
+      const summaryKeyParams = `summary_${currTimestampInput}_params`
+      
+      // Store loading state in main summary key
+      const loadingData = {}
+      localStorage.setItem(summaryKey, JSON.stringify(loadingData))
+      
+      // Store request parameters in params key
+      const paramsData = {
         requestParams: {
           npub: npubInput,
           since: sinceInput,
           curr_timestamp: currTimestampInput
         }
       }
-      localStorage.setItem(summaryKey, JSON.stringify(loadingData))
+      localStorage.setItem(summaryKeyParams, JSON.stringify(paramsData))
       
       console.log('Making POST request to https://6d8ea891e9b2.ngrok-free.app/run')
       
