@@ -329,14 +329,6 @@ function App() {
             <EventFeed data={data} />
           </section>
           <aside className="order-1 lg:order-2">
-            {/* New Summary Button */}
-            <button
-              onClick={handleNewSummary}
-              className="btn-primary w-full mb-4"
-            >
-              New Summary
-            </button>
-
             <div className="card p-4 mb-6">
               <div className="flex items-center justify-between mb-3">
                 <button
@@ -353,6 +345,13 @@ function App() {
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
+                </button>
+                {/* New Summary Button */}
+                <button
+                  onClick={handleNewSummary}
+                  className="btn-primary px-3 py-1 text-sm"
+                >
+                  New Summary
                 </button>
               </div>
               {allSummaries.length > 0 ? (
