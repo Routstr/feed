@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { fetchFollowingForNpub } from '../lib/nostr'
 
+const DEFAULT_INSTRUCTION = 'Posts that contain useful information that educate me in someway or the other. Shitposting should be avoided. Low effort notes should be avoided.'
+
 const formatRelativeTime = (timestamp) => {
   const now = Math.floor(Date.now() / 1000)
   const diff = now - parseInt(timestamp)
@@ -36,13 +38,14 @@ export default function NewSummary({ allSummaries, onCreated }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [npubInput, setNpubInput] = useState(() => localStorage.getItem('user_npub') || '')
   const [sinceInput, setSinceInput] = useState('')
-  const [instructionInput, setInstructionInput] = useState('Posts that contain useful information that educate me in someway or the other. Shitposting should be avoided. Low effort notes should be avoided.')
+  const [instructionInput, setInstructionInput] = useState(DEFAULT_INSTRUCTION)
   const [lastSummaryMessage, setLastSummaryMessage] = useState('')
   const [followingLoading, setFollowingLoading] = useState(false)
   const [followingCount, setFollowingCount] = useState(null)
   const [prefetchedFollowing, setPrefetchedFollowing] = useState(null)
   const lastFetchedNpubRef = useRef('')
   const debounceTimerRef = useRef(null)
+  const [warningTooltipOpen, setWarningTooltipOpen] = useState(false)
 
   const performFollowingFetch = async (npubToFetch) => {
     try {
@@ -71,6 +74,13 @@ export default function NewSummary({ allSummaries, onCreated }) {
   const open = async () => {
     const storedNpub = localStorage.getItem('user_npub')
     if (storedNpub) setNpubInput(storedNpub)
+
+    const storedInstruction = localStorage.getItem('user_instruction')
+    if (storedInstruction && storedInstruction.trim() !== '') {
+      setInstructionInput(storedInstruction)
+    } else {
+      setInstructionInput(DEFAULT_INSTRUCTION)
+    }
 
     const latest = allSummaries && allSummaries.length > 0 ? allSummaries[0] : null
     if (latest) {
@@ -111,6 +121,7 @@ export default function NewSummary({ allSummaries, onCreated }) {
     setIsSubmitting(true)
     try {
       if (npubInput) localStorage.setItem('user_npub', npubInput)
+      if (instructionInput) localStorage.setItem('user_instruction', instructionInput)
 
       const sinceTimestamp = Math.floor(new Date(sinceInput).getTime() / 1000)
       const currTimestamp = Math.floor(Date.now() / 1000)
@@ -224,7 +235,34 @@ export default function NewSummary({ allSummaries, onCreated }) {
                       </button>
                     ) : (
                       followingCount !== null && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Following: {followingCount} accounts</p>
+                        <div className="text-xs flex items-center gap-2 flex-wrap">
+                          <p className="text-gray-500 dark:text-gray-400">Following: {followingCount} accounts</p>
+                          {followingCount > 50 && (
+                            <div
+                              className="relative inline-flex items-center"
+                              onMouseEnter={() => setWarningTooltipOpen(true)}
+                              onMouseLeave={() => setWarningTooltipOpen(false)}
+                            >
+                              <span className="text-red-600 dark:text-red-400 underline decoration-dotted">Using the top 50 accounts</span>
+                              <button
+                                type="button"
+                                aria-label="More info"
+                                aria-expanded={warningTooltipOpen}
+                                className="ml-1 text-red-600 dark:text-red-400"
+                                onClick={() => setWarningTooltipOpen((v) => !v)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-5.75a.75.75 0 011.5 0v2a.75.75 0 01-1.5 0v-2zM10 6.5a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                              {warningTooltipOpen && (
+                                <div className="absolute left-0 mt-1 z-10 max-w-xs p-2 rounded border border-red-300 dark:border-red-700 bg-white dark:bg-gray-800 text-red-700 dark:text-red-300 shadow-lg">
+                                  Top 50 accounts you've reacted to will be used to analyse and fetch events. Working on a better algorithm soon (if you have suggestions and hit up Redshift)
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       )
                     )}
                   </div>
