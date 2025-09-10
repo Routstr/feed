@@ -129,6 +129,7 @@ export default function NewSummary({ allSummaries, onCreated }) {
       const summaryKeyParams = `summary_${currTimestamp}_params`
 
       localStorage.setItem(summaryKey, JSON.stringify({}))
+      if (onCreated) onCreated(summaryKey)
 
       let followingNpubs = Array.isArray(prefetchedFollowing) ? prefetchedFollowing : []
       if (!Array.isArray(followingNpubs) || followingNpubs.length === 0) {
