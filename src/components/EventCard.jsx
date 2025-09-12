@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const EventCard = ({ event, npub, name, profile_pic, onRerun, hideActions, model }) => {
   const formatDate = (timestamp) => {
@@ -12,6 +12,20 @@ const EventCard = ({ event, npub, name, profile_pic, onRerun, hideActions, model
   const reason = event.reason_for_score || '';
 
   const [showReason, setShowReason] = useState(false);
+  const reasonRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!showReason) return;
+      if (reasonRef.current && !reasonRef.current.contains(e.target)) {
+        setShowReason(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+    };
+  }, [showReason]);
 
   const scoreColor = (s) => {
     if (s >= 85) return 'text-emerald-700 bg-emerald-100 dark:text-emerald-200 dark:bg-emerald-900/30';
@@ -83,7 +97,7 @@ const EventCard = ({ event, npub, name, profile_pic, onRerun, hideActions, model
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(event.timestamp)}</p>
             </div>
-            <div className="relative group">
+            <div className="relative group" ref={reasonRef}>
               <div className={`pill ${scoreColor(score)} whitespace-nowrap flex items-center gap-1`}>
                 Relevancy: {score}%
                 {reason ? (

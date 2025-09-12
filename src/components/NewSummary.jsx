@@ -39,14 +39,12 @@ export default function NewSummary({ allSummaries, onCreated }) {
   const [npubInput, setNpubInput] = useState(() => localStorage.getItem('user_npub') || '')
   const [sinceInput, setSinceInput] = useState('')
   const [instructionInput, setInstructionInput] = useState(DEFAULT_INSTRUCTION)
-  const [modelInput, setModelInput] = useState(() => localStorage.getItem('user_model') || '')
   const [lastSummaryMessage, setLastSummaryMessage] = useState('')
   const [followingLoading, setFollowingLoading] = useState(false)
   const [followingCount, setFollowingCount] = useState(null)
   const [prefetchedFollowing, setPrefetchedFollowing] = useState(null)
   const lastFetchedNpubRef = useRef('')
   const debounceTimerRef = useRef(null)
-  const [warningTooltipOpen, setWarningTooltipOpen] = useState(false)
 
   const performFollowingFetch = async (npubToFetch) => {
     try {
@@ -83,8 +81,7 @@ export default function NewSummary({ allSummaries, onCreated }) {
       setInstructionInput(DEFAULT_INSTRUCTION)
     }
 
-    const storedModel = localStorage.getItem('user_model')
-    setModelInput(storedModel || '')
+
 
     const latest = allSummaries && allSummaries.length > 0 ? allSummaries[0] : null
     if (latest) {
@@ -126,7 +123,6 @@ export default function NewSummary({ allSummaries, onCreated }) {
     try {
       if (npubInput) localStorage.setItem('user_npub', npubInput)
       if (instructionInput) localStorage.setItem('user_instruction', instructionInput)
-      if (modelInput) localStorage.setItem('user_model', modelInput)
 
       const sinceTimestamp = Math.floor(new Date(sinceInput).getTime() / 1000)
       const currTimestamp = Math.floor(Date.now() / 1000)
@@ -150,7 +146,6 @@ export default function NewSummary({ allSummaries, onCreated }) {
           npub: npubInput,
           since: sinceTimestamp,
           curr_timestamp: currTimestamp,
-          model: modelInput || '',
           following_npubs: Array.isArray(followingNpubs) ? followingNpubs : [],
           following_count: Array.isArray(followingNpubs) ? followingNpubs.length : 0
         }
@@ -168,8 +163,7 @@ export default function NewSummary({ allSummaries, onCreated }) {
           npub: npubInput,
           since: sinceTimestamp,
           curr_timestamp: currTimestamp,
-          instruction: instructionInput,
-          model: modelInput || undefined
+          instruction: instructionInput
         })
       })
 
@@ -222,13 +216,18 @@ export default function NewSummary({ allSummaries, onCreated }) {
     <>
       <button onClick={open} className="btn-primary px-3 py-1 text-sm">New Summary</button>
       {show && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onMouseDown={(e) => { if (e.target === e.currentTarget) close() }}>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold">New Summary</h2>
               <button onClick={close} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">✕</button>
             </div>
             <div className="p-4 space-y-4">
+              {isSubmitting && (
+                <div className="text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded px-3 py-2">
+                  Goose is running in the background, you may close this window and click on the summary again to check if it's done
+                </div>
+              )}
               <div>
                 <label htmlFor="npub" className="block text-sm font-medium mb-1">npub</label>
                 <input id="npub" type="text" value={npubInput} onChange={(e) => setNpubInput(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter npub..." />
@@ -246,31 +245,6 @@ export default function NewSummary({ allSummaries, onCreated }) {
                       followingCount !== null && (
                         <div className="text-xs flex items-center gap-2 flex-wrap">
                           <p className="text-gray-500 dark:text-gray-400">Following: {followingCount} accounts</p>
-                          {followingCount > 50 && (
-                            <div
-                              className="relative inline-flex items-center"
-                              onMouseEnter={() => setWarningTooltipOpen(true)}
-                              onMouseLeave={() => setWarningTooltipOpen(false)}
-                            >
-                              <span className="text-red-600 dark:text-red-400 underline decoration-dotted">Using the top 50 accounts</span>
-                              <button
-                                type="button"
-                                aria-label="More info"
-                                aria-expanded={warningTooltipOpen}
-                                className="ml-1 text-red-600 dark:text-red-400"
-                                onClick={() => setWarningTooltipOpen((v) => !v)}
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-5.75a.75.75 0 011.5 0v2a.75.75 0 01-1.5 0v-2zM10 6.5a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
-                                </svg>
-                              </button>
-                              {warningTooltipOpen && (
-                                <div className="absolute left-0 mt-1 z-10 max-w-xs p-2 rounded border border-red-300 dark:border-red-700 bg-white dark:bg-gray-800 text-red-700 dark:text-red-300 shadow-lg">
-                                  You're following too many accounts. Top 50 accounts you've reacted to will be used to analyse and fetch events. Working on a better algorithm soon (if you have suggestions and hit up Redshift)
-                                </div>
-                              )}
-                            </div>
-                          )}
                         </div>
                       )
                     )}
@@ -288,10 +262,7 @@ export default function NewSummary({ allSummaries, onCreated }) {
                 <label htmlFor="instruction" className="block text-sm font-medium mb-1">Instruction</label>
                 <textarea id="instruction" value={instructionInput} onChange={(e) => setInstructionInput(e.target.value)} rows={4} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" />
               </div>
-              <div>
-                <label htmlFor="model" className="block text-sm font-medium mb-1">Model</label>
-                <input id="model" type="text" value={modelInput} onChange={(e) => setModelInput(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., gpt-4o, claude-3-5" />
-              </div>
+
             </div>
             <div className="flex gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
               <button onClick={close} className="btn-secondary flex-1" disabled={isSubmitting}>Cancel</button>
@@ -302,7 +273,7 @@ export default function NewSummary({ allSummaries, onCreated }) {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Submitting...
+                    Loading...
                   </span>
                 ) : (
                   'Submit'
