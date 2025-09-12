@@ -25,11 +25,28 @@ const EventCard = ({ event, npub, name, profile_pic, onRerun, hideActions, model
 
   const truncateNpub = (val) => (val ? `${val.slice(0, 12)}…${val.slice(-8)}` : 'Unknown');
 
-  // Display context_summary if this event is part of a thread, otherwise show event_content
+  // Display context_summary in addition to event_content when this event is part of a thread
   const isThreadEvent = event.events_in_thread && event.events_in_thread.length > 0;
-  const content = String(isThreadEvent ? (event.context_summary || '') : (event.event_content || ''));
   const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const contentParts = content.split(urlRegex);
+  const hasContextSummary = Boolean(
+    isThreadEvent && event.context_summary && String(event.context_summary).trim().length > 0
+  );
+
+  const summaryContent = hasContextSummary ? String(event.context_summary) : '';
+  const originalContent = String(event.event_content || '');
+
+  const renderWithLinks = (text) => {
+    const parts = String(text || '').split(urlRegex);
+    return parts.map((part, idx) =>
+      idx % 2 === 1 ? (
+        <a key={idx} href={part} target="_blank" rel="noopener noreferrer">
+          {part}
+        </a>
+      ) : (
+        <span key={idx}>{part}</span>
+      )
+    );
+  };
 
   return (
     <article className="card p-5 mb-4 shadow-card">
@@ -115,20 +132,27 @@ const EventCard = ({ event, npub, name, profile_pic, onRerun, hideActions, model
             </div>
           </div>
 
-          {/* Content */}
-          <div className="prose prose-sm dark:prose-invert max-w-none mt-3">
+          {/* Original event content */}
+          <div className="prose prose-sm dark:prose-invert max-w-none mt-3 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
             <p className="whitespace-pre-wrap break-words leading-relaxed">
-              {contentParts.map((part, i) =>
-                urlRegex.test(part) ? (
-                  <a key={i} href={part} target="_blank" rel="noopener noreferrer">
-                    {part}
-                  </a>
-                ) : (
-                  <span key={i}>{part}</span>
-                )
-              )}
+              {renderWithLinks(originalContent)}
             </p>
           </div>
+
+          {/* Context summary (if present) */}
+          {hasContextSummary ? (
+            <div className="mt-3 border border-dotted border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-900/30">
+              <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">
+                LLM added context to this note
+              </div>
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <p className="whitespace-pre-wrap break-words leading-relaxed">
+                  {renderWithLinks(summaryContent)}
+                </p>
+              </div>
+            </div>
+          ) : null}
+
           {event?.event_id ? (
             <div className="mt-4">
               <a
