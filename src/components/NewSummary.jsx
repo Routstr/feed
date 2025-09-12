@@ -175,6 +175,10 @@ export default function NewSummary({ allSummaries, onCreated }) {
         setShow(false)
       } else {
         console.error('Failed to submit summary:', response.statusText)
+        // If the response is not ok, refresh the page
+        if (typeof window !== 'undefined' && window.location) {
+          window.location.reload()
+        }
       }
     } catch (error) {
       console.error('Error submitting summary:', error)

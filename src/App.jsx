@@ -183,6 +183,10 @@ function App() {
         }
       } else {
         console.error('Failed to retry summary:', response.statusText)
+        // If the response is not ok, refresh the page
+        if (typeof window !== 'undefined' && window.location) {
+          window.location.reload()
+        }
       }
     } catch (error) {
       console.error('Error retrying summary:', error)
@@ -223,6 +227,10 @@ function App() {
       })
       if (!response.ok) {
         console.error('Failed to rerun event:', response.statusText)
+        // If the response is not ok, refresh the page
+        if (typeof window !== 'undefined' && window.location) {
+          window.location.reload()
+        }
         return
       }
       const result = await response.json()

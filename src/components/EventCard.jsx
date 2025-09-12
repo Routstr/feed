@@ -117,7 +117,7 @@ const EventCard = ({ event, npub, name, profile_pic, onRerun, hideActions, model
               </div>
               {reason ? (
                 <div
-                  className={`absolute right-0 mt-1 z-20 w-72 max-w-[80vw] rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 text-xs text-gray-700 dark:text-gray-200 shadow-lg ${showReason ? 'block' : 'hidden'} group-hover:block`}
+                  className={`absolute mt-1 z-20 w-[min(28rem,calc(100vw-2rem))] sm:w-[28rem] left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 sm:translate-x-0 transform rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 text-xs text-gray-700 dark:text-gray-200 shadow-lg ${showReason ? 'block' : 'hidden'} group-hover:block`}
                   role="tooltip"
                 >
                   <div className="flex items-center justify-between mb-1">
