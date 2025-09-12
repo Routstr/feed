@@ -3,6 +3,7 @@ import EventFeed from './components/EventFeed'
 import { sampleData } from './data/sampleData'
 import './index.css'
 import NewSummary from './components/NewSummary'
+import EventCard from './components/EventCard'
 
 function App() {
   // Function to format timestamp as relative time
@@ -98,6 +99,12 @@ function App() {
   // State for collapsible summaries list on mobile
   const [summariesExpanded, setSummariesExpanded] = useState(false)
 
+  // Rerun modal state
+  const [rerunOpen, setRerunOpen] = useState(false)
+  const [rerunEvent, setRerunEvent] = useState(null)
+  const [rerunInstruction, setRerunInstruction] = useState('')
+  const [rerunSubmitting, setRerunSubmitting] = useState(false)
+
   // Function to handle selecting a different summary or retrying a loading summary
   const handleSummarySelect = async (summaryKey) => {
     const selectedSummary = allSummaries.find(s => s.key === summaryKey)
@@ -144,9 +151,9 @@ function App() {
         console.warn('Failed to refresh following list on retry:', e)
       }
       
-      console.log('Retrying POST request to https://6d8ea891e9b2.ngrok-free.app/run')
+      console.log('Retrying POST request to https://33c01492b8f6.ngrok-free.app/run')
       
-      const response = await fetch('https://6d8ea891e9b2.ngrok-free.app/run', {
+      const response = await fetch('https://33c01492b8f6.ngrok-free.app/run', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -188,6 +195,76 @@ function App() {
   const refreshSummaries = () => {
     const updatedSummaries = loadAllSummaries()
     setAllSummaries(updatedSummaries)
+  }
+
+  // Open rerun modal for an event
+  const handleOpenRerun = (event) => {
+    setRerunEvent(event)
+    const storedInstruction = localStorage.getItem('user_instruction')
+    setRerunInstruction(storedInstruction && storedInstruction.trim() !== '' ? storedInstruction : '')
+    setRerunOpen(true)
+  }
+
+  // Submit rerun request
+  const handleSubmitRerun = async () => {
+    if (!rerunEvent) return
+    setRerunSubmitting(true)
+    try {
+      const response = await fetch('https://e85c283972d3.ngrok-free.app/rerun', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({
+          event_content: rerunEvent.event_content || '',
+          instruction: rerunInstruction || ''
+        })
+      })
+      if (!response.ok) {
+        console.error('Failed to rerun event:', response.statusText)
+        return
+      }
+      const result = await response.json()
+      console.log('Rerun result:', result)
+
+      // Update this event's relevancy and reason in current summary data and localStorage
+      setData(prev => {
+        try {
+          const draft = JSON.parse(JSON.stringify(prev))
+          if (draft && Array.isArray(draft.output)) {
+            for (const out of draft.output) {
+              if (!Array.isArray(out.events)) continue
+              const idx = out.events.findIndex(ev => ev.event_id === rerunEvent.event_id)
+              if (idx !== -1) {
+                if (typeof result.relevancy_score !== 'undefined') {
+                  out.events[idx].relevancy_score = result.relevancy_score
+                }
+                if (typeof result.reason_for_score !== 'undefined') {
+                  out.events[idx].reason_for_score = result.reason_for_score
+                }
+                break
+              }
+            }
+          }
+          // Persist to localStorage if a summary key is selected
+          if (currentSummaryKey) {
+            localStorage.setItem(currentSummaryKey, JSON.stringify(draft))
+            refreshSummaries()
+          }
+          return draft
+        } catch (e) {
+          console.warn('Failed to update event after rerun:', e)
+          return prev
+        }
+      })
+      setRerunOpen(false)
+      setRerunEvent(null)
+    } catch (e) {
+      console.error('Error during rerun:', e)
+    } finally {
+      setRerunSubmitting(false)
+    }
   }
 
   // Function to delete a summary (with confirmation)
@@ -248,7 +325,7 @@ function App() {
       <main className="max-w-4xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <section className="lg:col-span-2 order-2 lg:order-1">
-            <EventFeed data={data} />
+            <EventFeed data={data} onRerun={handleOpenRerun} />
           </section>
           <aside className="order-1 lg:order-2">
             <div className="card p-4">
@@ -484,6 +561,48 @@ function App() {
       </footer>
 
       {/* New Summary Modal moved to component */}
+
+      {/* Rerun Modal */}
+      {rerunOpen && rerunEvent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold">Rerun Scoring</h2>
+              <button onClick={() => setRerunOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">✕</button>
+            </div>
+            <div className="p-4 space-y-4">
+              {/* Preview the event card */}
+              <EventCard event={rerunEvent} npub={rerunEvent.npub} name={rerunEvent.name} profile_pic={rerunEvent.profile_pic} hideActions onRerun={null} model={data?.model || (typeof window !== 'undefined' ? (localStorage.getItem('user_model') || null) : null)} />
+              <div>
+                <label htmlFor="rerun-instruction" className="block text-sm font-medium mb-1">Instruction</label>
+                <textarea
+                  id="rerun-instruction"
+                  value={rerunInstruction}
+                  onChange={(e) => setRerunInstruction(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
+              <button onClick={() => setRerunOpen(false)} className="btn-secondary flex-1" disabled={rerunSubmitting}>Cancel</button>
+              <button onClick={handleSubmitRerun} disabled={rerunSubmitting} className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed">
+                {rerunSubmitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Submitting...
+                  </span>
+                ) : (
+                  'Submit'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

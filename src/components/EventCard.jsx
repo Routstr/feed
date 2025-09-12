@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-const EventCard = ({ event, npub, name, profile_pic }) => {
+const EventCard = ({ event, npub, name, profile_pic, onRerun, hideActions, model }) => {
   const formatDate = (timestamp) => {
     if (!timestamp) return 'Unknown date';
     const date = new Date(timestamp * 1000);
@@ -8,6 +8,10 @@ const EventCard = ({ event, npub, name, profile_pic }) => {
   };
 
   const score = Number(event.relevancy_score) || 0;
+
+  const reason = event.reason_for_score || '';
+
+  const [showReason, setShowReason] = useState(false);
 
   const scoreColor = (s) => {
     if (s >= 85) return 'text-emerald-700 bg-emerald-100 dark:text-emerald-200 dark:bg-emerald-900/30';
@@ -62,8 +66,52 @@ const EventCard = ({ event, npub, name, profile_pic }) => {
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(event.timestamp)}</p>
             </div>
-            <div className={`pill ${scoreColor(score)} whitespace-nowrap`}>
-              Relevancy: {score}%
+            <div className="relative group">
+              <div className={`pill ${scoreColor(score)} whitespace-nowrap flex items-center gap-1`}>
+                Relevancy: {score}%
+                {reason ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowReason((v) => !v);
+                    }}
+                    className="ml-2 inline-flex items-center justify-center px-2 py-1 rounded-md text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-400"
+                    aria-label="Show relevancy reason"
+                    title="Show relevancy reason"
+                  >
+                    Why ?
+                  </button>
+                ) : null}
+              </div>
+              {reason ? (
+                <div
+                  className={`absolute right-0 mt-1 z-20 w-72 max-w-[80vw] rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 text-xs text-gray-700 dark:text-gray-200 shadow-lg ${showReason ? 'block' : 'hidden'} group-hover:block`}
+                  role="tooltip"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="font-medium">Why this score</div>
+                    {model ? (
+                      <div className="text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">Model: <span className="font-mono">{model}</span></div>
+                    ) : null}
+                  </div>
+                  <div className="whitespace-pre-wrap break-words">{reason}</div>
+                  {!hideActions && onRerun ? (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRerun(event);
+                        }}
+                        className="btn-primary px-2 py-1 text-[11px]"
+                      >
+                        Rerun
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -94,7 +142,6 @@ const EventCard = ({ event, npub, name, profile_pic }) => {
             </div>
           ) : null}
 
-          
         </div>
       </div>
       

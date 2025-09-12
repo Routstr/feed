@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import EventCard from './EventCard';
 
-const EventFeed = ({ data }) => {
+const EventFeed = ({ data, onRerun }) => {
   const [minScore, setMinScore] = useState(0);
   const [query, setQuery] = useState('');
 
@@ -12,7 +12,8 @@ const EventFeed = ({ data }) => {
       npub: o.npub,
       name: o.name,
       profile_pic: o.profile_pic,
-      summary: o.summary
+      summary: o.summary,
+      __model: data?.model || null
     })));
   }, [data]);
 
@@ -49,6 +50,8 @@ const EventFeed = ({ data }) => {
               npub={event.npub}
               name={event.name}
               profile_pic={event.profile_pic}
+              onRerun={onRerun}
+              model={event.__model || (typeof window !== 'undefined' ? (localStorage.getItem('user_model') || null) : null)}
             />
           ))}
         </div>
