@@ -152,8 +152,8 @@ export default function NewSummary({ allSummaries, onCreated }) {
       }
       localStorage.setItem(summaryKeyParams, JSON.stringify(paramsData))
 
-      console.log('Making POST request to https://33c01492b8f6.ngrok-free.app/run')
-      const response = await fetch('https://33c01492b8f6.ngrok-free.app/run', {
+      console.log('Making POST request to https://goose.redsh1ft.com/run')
+      const response = await fetch('https://goose.redsh1ft.com/run', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
